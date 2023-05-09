@@ -55,6 +55,39 @@ const dummy = (blogs) => {
       blogs: maxBlogs
     };
   };
+
+  const mostLikes = (blogs) => {
+    if (blogs.length === 0) {
+      return null;
+    }
+  
+    const likesByAuthor = {};
+  
+    // count the number of likes for each author
+    blogs.forEach((blog) => {
+      if (!likesByAuthor[blog.author]) {
+        likesByAuthor[blog.author] = blog.likes;
+      } else {
+        likesByAuthor[blog.author] += blog.likes;
+      }
+    });
+  
+    // find the author with the most likes
+    let maxLikes = 0;
+    let topAuthor = '';
+    for (let author in likesByAuthor) {
+      if (likesByAuthor[author] > maxLikes) {
+        maxLikes = likesByAuthor[author];
+        topAuthor = author;
+      }
+    }
+  
+    return {
+      author: topAuthor,
+      likes: maxLikes,
+    };
+  };
+  
   
   
   module.exports = {
@@ -62,6 +95,7 @@ const dummy = (blogs) => {
     totalLikes,
     favoriteBlog,
     mostBlogs,
+    mostLikes,
   };
   
 
