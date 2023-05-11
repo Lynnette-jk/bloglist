@@ -87,6 +87,28 @@ describe("POST requests to /api/blogs", () => {
   // Other tests for POST requests to /api/blogs can go here
 });
 
+describe("when creating a new blog post", () => {
+  test("if title property is missing, responds with status code 400", async () => {
+    const newBlog = {
+      author: "John Doe",
+      url: "http://testblog.com",
+      likes: 10,
+    };
+
+    await api.post("/api/blogs").send(newBlog).expect(400);
+  });
+
+  test("if url property is missing, responds with status code 400", async () => {
+    const newBlog = {
+      title: "Test Blog",
+      author: "John Doe",
+      likes: 10,
+    };
+
+    await api.post("/api/blogs").send(newBlog).expect(400);
+  });
+});
+
 afterAll(async () => {
   await mongoose.connection.close();
 });
