@@ -44,6 +44,34 @@ describe("Blog post unique identifier", () => {
   });
 });
 
+describe("creating a new blog post", () => {
+  beforeEach(async () => {
+    await Blog.deleteMany({});
+  });
+
+  test("succeeds with valid data", async () => {
+    const newBlog = {
+      title: "Test Blog",
+      author: "John Doe",
+      url: "http://testblog.com",
+      likes: 10,
+    };
+
+    await api
+      .post("/api/blogs")
+      .send(newBlog)
+      .expect(201)
+      .expect("Content-Type", /application\/json/);
+
+    const blogsAfter = await Blog.find({});
+    expect(blogsAfter).toHaveLength(1);
+    expect(blogsAfter[0].title).toEqual("Test Blog");
+    expect(blogsAfter[0].author).toEqual("John Doe");
+    expect(blogsAfter[0].url).toEqual("http://testblog.com");
+    expect(blogsAfter[0].likes).toEqual(10);
+  });
+});
+
 afterAll(async () => {
   await mongoose.connection.close();
 });
