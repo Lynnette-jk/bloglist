@@ -72,6 +72,21 @@ describe("creating a new blog post", () => {
   });
 });
 
+describe("POST requests to /api/blogs", () => {
+  test("if likes property is missing, it defaults to 0", async () => {
+    const newBlog = {
+      title: "Test Blog",
+      author: "John Doe",
+      url: "http://testblog.com",
+    };
+
+    const response = await api.post("/api/blogs").send(newBlog).expect(201);
+    expect(response.body.likes).toBe(0);
+  });
+
+  // Other tests for POST requests to /api/blogs can go here
+});
+
 afterAll(async () => {
   await mongoose.connection.close();
 });
