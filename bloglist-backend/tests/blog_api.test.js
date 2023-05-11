@@ -5,8 +5,7 @@ const app = require("../app");
 
 const api = supertest(app);
 const Blog = require("../models/blogs");
-const helper = require('../utils/list_helper');
-
+const helper = require("../utils/list_helper");
 
 beforeEach(async () => {
   await Blog.deleteMany({});
@@ -123,6 +122,30 @@ describe("deleting a blog post", () => {
 
     const titles = blogsAtEnd.map((blog) => blog.title);
     expect(titles).not.toContain(blogToDelete.title);
+  });
+});
+
+describe("updating likes for a blog post", () => {
+  test("updating likes for a blog post succeeds with status code 200", async () => {
+    const blogsAtStart = await helper.blogsInDb();
+    const blogToUpdate = blogsAtStart[0];
+
+    const updatedBlog = {
+      ...blogToUpdate,
+      likes: blogToUpdate.likes + 1,
+    };
+
+    await api
+      .put(`/api/blogs/${blogToUpdate.id}`)
+      .send(updatedBlog)
+      .expect(200);
+
+    const blogsAtEnd = await helper.blogsInDb();
+    const updatedBlogInDb = blogsAtEnd.find(
+      (blog) => blog.id === blogToUpdate.id
+    );
+
+    expect(updatedBlogInDb.likes).toBe(blogToUpdate.likes + 1);
   });
 });
 

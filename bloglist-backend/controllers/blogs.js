@@ -34,21 +34,25 @@ blogsRouter.post("/", async (req, res, next) => {
 });
 
 blogsRouter.put("/:id", async (req, res, next) => {
+  const { id } = req.params;
+  const { title, author, url, likes } = req.body;
+
   try {
-    const { title, author, url, likes } = req.body;
-    const updatedBlog = await Blog.findByIdAndUpdate(
-      req.params.id,
-      {
-        title,
-        author,
-        url,
-        likes,
-      },
-      { new: true }
-    );
-    res.json(updatedBlog);
+    const blogToUpdate = await Blog.findById(id);
+
+    if (!blogToUpdate) {
+      return res.status(404).json({ error: "Blog not found" });
+    }
+
+    blogToUpdate.title = title || blogToUpdate.title;
+    blogToUpdate.author = author || blogToUpdate.author;
+    blogToUpdate.url = url || blogToUpdate.url;
+    blogToUpdate.likes = likes || blogToUpdate.likes;
+
+    const updatedBlog = await blogToUpdate.save();
+
+    res.json(updatedBlog.toJSON());
   } catch (error) {
-    console.error(error);
     next(error);
   }
 });
