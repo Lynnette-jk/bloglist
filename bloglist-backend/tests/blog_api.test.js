@@ -149,6 +149,47 @@ describe("updating likes for a blog post", () => {
   });
 });
 
+describe("Creating a user with invalid username and/or password", () => {
+  test("creating a user with invalid username and/or password fails with status code 400", async () => {
+    const usersAtStart = await helper.usersInDb();
+
+    const newUser1 = {
+      username: "ab",
+      name: "Alice Bobson",
+      password: "12345",
+    };
+
+    const newUser2 = {
+      username: "charlie",
+      name: "Charlie Davidson",
+      password: "12",
+    };
+
+    const newUser3 = {
+      username: "bob",
+      name: "Bob Johnson",
+    };
+
+    const response1 = await api.post("/api/users").send(newUser1).expect(400);
+    expect(response1.body.error).toContain(
+      "username and password must be at least 3 characters long"
+    );
+
+    const response2 = await api.post("/api/users").send(newUser2).expect(400);
+    expect(response2.body.error).toContain(
+      "username and password must be at least 3 characters long"
+    );
+
+    const response3 = await api.post("/api/users").send(newUser3).expect(400);
+    expect(response3.body.error).toContain(
+      "username and password must be given"
+    );
+
+    const usersAtEnd = await helper.usersInDb();
+    expect(usersAtEnd).toHaveLength(usersAtStart.length);
+  });
+});
+
 afterAll(async () => {
   await mongoose.connection.close();
 });
