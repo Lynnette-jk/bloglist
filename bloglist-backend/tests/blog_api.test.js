@@ -5,6 +5,8 @@ const app = require("../app");
 
 const api = supertest(app);
 const Blog = require("../models/blogs");
+const helper = require('../utils/list_helper');
+
 
 beforeEach(async () => {
   await Blog.deleteMany({});
@@ -106,6 +108,21 @@ describe("when creating a new blog post", () => {
     };
 
     await api.post("/api/blogs").send(newBlog).expect(400);
+  });
+});
+
+describe("deleting a blog post", () => {
+  test("deleting a blog post succeeds with status code 204 if id is valid", async () => {
+    const blogsAtStart = await helper.blogsInDb();
+    const blogToDelete = blogsAtStart[0];
+
+    await api.delete(`/api/blogs/${blogToDelete.id}`).expect(204);
+
+    const blogsAtEnd = await helper.blogsInDb();
+    expect(blogsAtEnd).toHaveLength(blogsAtStart.length - 1);
+
+    const titles = blogsAtEnd.map((blog) => blog.title);
+    expect(titles).not.toContain(blogToDelete.title);
   });
 });
 
