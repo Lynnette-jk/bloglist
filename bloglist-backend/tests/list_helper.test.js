@@ -396,13 +396,23 @@ const User = require("../models/user");
 
 describe("when there is initially one user in db", () => {
   beforeEach(async () => {
-    await User.deleteMany({});
+    jest.setTimeout(60000); // increased timeout to 60 seconds
+    const batchSize = 1000;
+    const count = await User.countDocuments({}).maxTimeMS(30000);
+
+    const batches = Math.ceil(count / batchSize);
+
+    for (let i = 0; i < batches; i++) {
+      await User.bulkWrite([{ deleteMany: { filter: {}, limit: batchSize } }]);
+    }
 
     const passwordHash = await bcrypt.hash("sekret", 10);
-    const user = new User({ username: "root", passwordHash });
+    const user1 = new User({ username: "user1", passwordHash });
+    const user2 = new User({ username: "user2", passwordHash });
 
-    await user.save();
-  });
+    await user1.save();
+    await user2.save();
+  }, 60000);
 
   test("creation succeeds with a fresh username", async () => {
     const usersAtStart = await helper.usersInDb();
@@ -425,24 +435,24 @@ describe("when there is initially one user in db", () => {
     const usernames = usersAtEnd.map((u) => u.username);
     expect(usernames).toContain(newUser.username);
   });
-  test('creation fails with proper statuscode and message if username already taken', async () => {
-    const usersAtStart = await helper.usersInDb()
+  test("creation fails with proper statuscode and message if username already taken", async () => {
+    const usersAtStart = await helper.usersInDb();
 
     const newUser = {
-      username: 'root',
-      name: 'Superuser',
-      password: 'salainen',
-    }
+      username: "root",
+      name: "Superuser",
+      password: "salainen",
+    };
 
     const result = await api
-      .post('/api/users')
+      .post("/api/users")
       .send(newUser)
       .expect(400)
-      .expect('Content-Type', /application\/json/)
+      .expect("Content-Type", /application\/json/);
 
-    expect(result.body.error).toContain('expected `username` to be unique')
+    expect(result.body.error).toContain("expected `username` to be unique");
 
-    const usersAtEnd = await helper.usersInDb()
-    expect(usersAtEnd).toEqual(usersAtStart)
+    const usersAtEnd = await helper.usersInDb();
+    expect(usersAtEnd).toEqual(usersAtStart);
   });
 });
