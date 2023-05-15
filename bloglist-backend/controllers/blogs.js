@@ -1,10 +1,13 @@
 const express = require("express");
 const blogsRouter = express.Router();
 const Blog = require("../models/blogs");
+const User = require("../models/user");
 
 blogsRouter.get("/", async (req, res, next) => {
   try {
-    const blogs = await Blog.find({});
+    const blogs = await Blog.find({})
+      .populate("user", { username: 1, name: 1 });
+
     res.json(blogs);
   } catch (error) {
     console.error(error);
@@ -19,13 +22,22 @@ blogsRouter.post("/", async (req, res, next) => {
     if (!title || !url) {
       return res.status(400).json({ error: "title or url missing" });
     }
+
+    const users = await User.find({});
+    const randomUser = users[Math.floor(Math.random() * users.length)];
+
     const blog = new Blog({
       title,
       author,
       url,
       likes: likes || 0,
+      user: randomUser._id,
     });
+
     const savedBlog = await blog.save();
+    randomUser.blogs = randomUser.blogs.concat(savedBlog._id);
+    await randomUser.save();
+
     res.status(201).json(savedBlog);
   } catch (error) {
     console.error(error);
