@@ -1,12 +1,25 @@
 const express = require("express");
 const blogsRouter = express.Router();
 const Blog = require("../models/blogs");
-const User = require("../models/user");
+
+const { authMiddleware } = require('../utils/middleware');
+const jwt = require('jsonwebtoken');
+
+
+const getTokenFrom = request => {
+  const authorization = request.get('authorization')
+  if (authorization && authorization.startsWith('Bearer ')) {
+    return authorization.replace('Bearer ', '')
+  }
+  return null
+}
 
 blogsRouter.get("/", async (req, res, next) => {
   try {
-    const blogs = await Blog.find({})
-      .populate("user", { username: 1, name: 1 });
+    const blogs = await Blog.find({}).populate("user", {
+      username: 1,
+      name: 1,
+    });
 
     res.json(blogs);
   } catch (error) {
@@ -43,7 +56,7 @@ blogsRouter.post("/", async (req, res, next) => {
     console.error(error);
     next(error);
   }
-});
+}); 
 
 blogsRouter.put("/:id", async (req, res, next) => {
   const { id } = req.params;
