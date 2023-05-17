@@ -2,17 +2,16 @@ const express = require("express");
 const blogsRouter = express.Router();
 const Blog = require("../models/blogs");
 
-const { authMiddleware } = require('../utils/middleware');
-const jwt = require('jsonwebtoken');
+const { authMiddleware } = require("../utils/middleware");
+const jwt = require("jsonwebtoken");
 
-
-const getTokenFrom = request => {
-  const authorization = request.get('authorization')
-  if (authorization && authorization.startsWith('Bearer ')) {
-    return authorization.replace('Bearer ', '')
+const getTokenFrom = (request) => {
+  const authorization = request.get("authorization");
+  if (authorization && authorization.startsWith("Bearer ")) {
+    return authorization.replace("Bearer ", "");
   }
-  return null
-}
+  return null;
+};
 
 blogsRouter.get("/", async (req, res, next) => {
   try {
@@ -35,8 +34,12 @@ blogsRouter.post("/", async (req, res, next) => {
     if (!title || !url) {
       return res.status(400).json({ error: "title or url missing" });
     }
+    const decodedToken = jwt.verify(req.token, process.env.SECRET);
+    if (!req.token || !decodedToken.id) {
+      return res.status(401).json({ error: "token missing or invalid" });
+    }
+    const user = await User.findById(decodedToken.id);
 
-    const users = await User.find({});
     const randomUser = users[Math.floor(Math.random() * users.length)];
 
     const blog = new Blog({
@@ -56,7 +59,7 @@ blogsRouter.post("/", async (req, res, next) => {
     console.error(error);
     next(error);
   }
-}); 
+});
 
 blogsRouter.put("/:id", async (req, res, next) => {
   const { id } = req.params;
