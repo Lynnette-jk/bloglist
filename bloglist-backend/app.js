@@ -8,6 +8,8 @@ const loginRouter = require('./controllers/login')
 const config = require('./utils/config')
 const logger = require('./utils/logger')
 const middleware = require('./utils/middleware')
+const tokenExtractor = require('./utils/tokenExtractor')
+
 
 logger.info('connecting to', config.MONGODB_URI)
 
@@ -23,6 +25,8 @@ app.use(cors())
 app.use(express.json())
 app.use(express.static('build'))
 app.use(middleware.requestLogger)
+app.use(tokenExtractor)
+
 
 app.use('/api/blogs', tokenExtractor, blogsRouter)
 app.use('/api/users', usersRouter)
