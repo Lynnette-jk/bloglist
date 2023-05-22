@@ -1,11 +1,10 @@
-const getTokenFrom = require('./getTokenFrom');
+
 
 const tokenExtractor = (request, response, next) => {
-  const authorization = request.get('Authorization');
+  const authorization = request.get("Authorization");
 
-  if (authorization && authorization.toLowerCase().startsWith('bearer ')) {
-    const token = getTokenFrom(authorization);
-    request.token = token;
+  if (authorization && authorization.toLowerCase().startsWith("bearer ")) {
+    request.token = authorization.substring(7);
   }
 
   next();

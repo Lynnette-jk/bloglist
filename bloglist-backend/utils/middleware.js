@@ -37,10 +37,30 @@ const tokenExtractor = (req, res, next) => {
   next()
 }
 
+const authMiddleware = (req, res, next) => {
+  const authorization = req.headers.authorization;
+
+  if (!authorization || !authorization.startsWith("Bearer ")) {
+    return res.status(401).json({ error: "Unauthorized" });
+  }
+
+  const token = authorization.replace("Bearer ", "");
+  console.log("Token:", token);
+
+  try {
+    const decodedToken = jwt.verify(token, process.env.SECRET);
+    req.token = decodedToken;
+    next();
+  } catch (error) {
+    return res.status(401).json({ error: "Unauthorized" });
+  }
+}
+
 
 module.exports = {
   requestLogger,
   unknownEndpoint,
   errorHandler,
   tokenExtractor,
+  authMiddleware,
 };

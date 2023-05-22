@@ -1,8 +1,10 @@
 const express = require("express");
 const blogsRouter = express.Router();
 const Blog = require("../models/blogs");
+const User = require("../models/user");
 
 const { authMiddleware } = require("../utils/middleware");
+
 const jwt = require("jsonwebtoken");
 
 const getTokenFrom = (request) => {
@@ -27,32 +29,36 @@ blogsRouter.get("/", async (req, res, next) => {
   }
 });
 
-blogsRouter.post("/", async (req, res, next) => {
+blogsRouter.post("/", authMiddleware, async (req, res, next) => {
   try {
     const { title, author, url, likes } = req.body;
 
     if (!title || !url) {
       return res.status(400).json({ error: "title or url missing" });
     }
+
     const decodedToken = jwt.verify(req.token, process.env.SECRET);
     if (!req.token || !decodedToken.id) {
       return res.status(401).json({ error: "token missing or invalid" });
     }
+
     const user = await User.findById(decodedToken.id);
 
-    const randomUser = users[Math.floor(Math.random() * users.length)];
+    if (!user) {
+      return res.status(404).json({ error: "User not found" });
+    }
 
     const blog = new Blog({
       title,
       author,
       url,
       likes: likes || 0,
-      user: randomUser._id,
+      user: user._id,
     });
 
     const savedBlog = await blog.save();
-    randomUser.blogs = randomUser.blogs.concat(savedBlog._id);
-    await randomUser.save();
+    user.blogs = user.blogs.concat(savedBlog._id);
+    await user.save();
 
     res.status(201).json(savedBlog);
   } catch (error) {
@@ -85,12 +91,33 @@ blogsRouter.put("/:id", async (req, res, next) => {
   }
 });
 
-blogsRouter.delete("/:id", async (req, res, next) => {
+blogsRouter.delete("/:id", authMiddleware, async (request, response, next) => {
   try {
-    await Blog.findByIdAndDelete(req.params.id);
-    res.status(204).end();
+    const blog = await Blog.findById(request.params.id);
+
+    if (!blog) {
+      return response.status(404).json({ error: "Blog not found" });
+    }
+    const decodedToken = jwt.verify(req.token, process.env.SECRET);
+    if (!req.token || !decodedToken.id) {
+      return res.status(401).json({ error: "Token missing or invalid" });
+    }
+
+    const userId = decodedToken.id;
+
+    // Check if the user ID of the blog's creator matches the current user's ID
+
+    // Add the logic to check if the logged-in user is the creator of the blog
+    if (blog.user.toString() !== request.user._id.toString()) {
+      return response
+        .status(401)
+        .json({ error: "You are not authorized to delete this blog" });
+    }
+
+    await Blog.findByIdAndRemove(request.params.id);
+
+    response.status(204).end();
   } catch (error) {
-    console.error(error);
     next(error);
   }
 });
