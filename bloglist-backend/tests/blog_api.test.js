@@ -190,6 +190,48 @@ describe("Creating a user with invalid username and/or password", () => {
   });
 });
 
+describe("Adding a new blog", () => {
+  let token;
+
+  beforeEach(async () => {
+    // Log in a user and obtain the token
+    const user = {
+      username: "testuser",
+      password: "testpassword",
+    };
+
+    const response = await api.post("/api/login").send(user);
+    token = response.body.token;
+  });
+
+  test("should add a new blog with valid data", async () => {
+    const newBlog = {
+      title: "Test Blog",
+      author: "Test Author",
+      url: "http://testblog.com",
+      likes: 10,
+    };
+
+    await api
+      .post("/api/blogs")
+      .send(newBlog)
+      .set("Authorization", `Bearer ${token}`)
+      .expect(201)
+      .expect("Content-Type", /application\/json/);
+  });
+
+  test("should return 401 Unauthorized when adding a blog without a token", async () => {
+    const newBlog = {
+      title: "Test Blog",
+      author: "Test Author",
+      url: "http://testblog.com",
+      likes: 10,
+    };
+
+    await api.post("/api/blogs").send(newBlog).expect(401);
+  });
+});
+
 afterAll(async () => {
   await mongoose.connection.close();
 });
