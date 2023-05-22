@@ -56,6 +56,17 @@ const authMiddleware = (req, res, next) => {
   }
 }
 
+const userExtractor = (req, res, next) => {
+  const token = req.token;
+
+  if (token) {
+    const decodedToken = jwt.verify(token, process.env.SECRET);
+    req.user = decodedToken;
+  }
+
+  next();
+};
+
 
 module.exports = {
   requestLogger,
@@ -63,4 +74,5 @@ module.exports = {
   errorHandler,
   tokenExtractor,
   authMiddleware,
+  userExtractor,
 };
